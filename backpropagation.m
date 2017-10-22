@@ -104,6 +104,23 @@ while iteration < MAX_ITERATION
         activation{l} = 1./(1+exp(activation{l}*-1));
     end
 
+    % VALIDATION STEP
+    train_error_each_iteration(iteration, 1) = mean(mean((1/2) * (train_target - activation{total_layers}).^2, 1));
+
+    [val_err, accuracy] = test(weight, total_layers, threshold, bias, validation_target, validation_data, 'VALIDATION', 1);
+    validation_error_each_iteration(iteration, 1) = val_err;
+    
+    if iteration > 1
+        if  validation_error_each_iteration(iteration, 1) > validation_error_each_iteration(iteration-1, 1)% && train_error_each_iteration(iteration, 1) < train_error_each_iteration(iteration-1, 1)
+            validation_counter = validation_counter + 1;
+            if validation_counter == validation_iteration_limit
+                break
+            end
+        else
+            validation_counter = 0;
+        end
+    end    
+    
     % BACKWARD PASS
     delta = cell(1, total_layers);
 
@@ -142,22 +159,7 @@ while iteration < MAX_ITERATION
         end
     end
     
-    % VALIDATION STEP
-    train_error_each_iteration(iteration, 1) = mean(mean((1/2) * (train_target - activation{total_layers}).^2, 1));
 
-    [val_err, accuracy] = test(weight, total_layers, threshold, bias, validation_target, validation_data, 'VALIDATION', 1);
-    validation_error_each_iteration(iteration, 1) = val_err;
-    
-    if iteration > 1
-        if  validation_error_each_iteration(iteration, 1) > validation_error_each_iteration(iteration-1, 1)% && train_error_each_iteration(iteration, 1) < train_error_each_iteration(iteration-1, 1)
-            validation_counter = validation_counter + 1;
-            if validation_counter == validation_iteration_limit
-                break
-            end
-        else
-            validation_counter = 0;
-        end
-    end
         
     fprintf('iteration %d/%d | Validation Error = %d | Train Error = %d | Validation Counter = %d\n', iteration, MAX_ITERATION, validation_error_each_iteration(iteration, 1), train_error_each_iteration(iteration, 1), validation_counter);
     iteration = iteration + 1;
